@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Blox</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#111214;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:9px 14px;background:#2f3136;color:#fff;font-weight:600}
+button:hover{filter:brightness(1.15)}
+button.pri{background:#00a2ff}
+button.grn{background:#02b757}
+button.red{background:#e03131}
+button.sm{padding:6px 10px;font-size:13px}
+input,select,textarea{font:inherit;background:#1e1f22;color:#fff;border:1px solid #3a3c42;border-radius:8px;padding:9px 11px;outline:none;width:100%}
+input:focus,textarea:focus{border-color:#00a2ff}
+.hidden{display:none!important}
+.page{position:fixed;inset:0}
+/* login */
+#login{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%,#1d4ed8 0,#111214 55%)}
+.lbox{width:min(380px,92vw);background:#191a1d;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px #0008}
+.logo{font-size:34px;font-weight:900;letter-spacing:-1px}
+.logo b{display:inline-block;background:#fff;color:#111;padding:0 8px;border-radius:6px;transform:rotate(-8deg);margin-right:4px}
+.lerr{color:#ff6b6b;font-size:13px;min-height:16px}
+.muted{color:#9aa0a6;font-size:13px}
+.link{color:#00a2ff;cursor:pointer}
+/* home */
+#home{display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;padding:10px 16px;background:#191a1d;border-bottom:1px solid #26282c;flex-wrap:wrap}
+.top .logo{font-size:24px}
+.tabs{display:flex;gap:4px}
+.tabs button{background:transparent;color:#bbb}
+.tabs button.on{background:#2f3136;color:#fff}
+.sp{flex:1}
+.who{display:flex;align-items:center;gap:8px;font-weight:700}
+.content{flex:1;overflow:auto;padding:18px}
+h2{font-size:20px;margin:6px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.card{background:#1c1d21;border-radius:12px;overflow:hidden;border:1px solid #26282c;display:flex;flex-direction:column}
+.thumb{height:110px;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900}
+.card .b{padding:10px;display:flex;flex-direction:column;gap:4px;flex:1}
+.card .n{font-weight:800}
+.card .row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.online{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.orow{display:flex;align-items:center;gap:10px;background:#1c1d21;padding:8px 12px;border-radius:10px}
+.dot{width:9px;height:9px;border-radius:50%;background:#02b757}
+/* avatar */
+#tabAvatar{display:flex;gap:16px;height:100%;flex-wrap:wrap}
+#avStage{flex:1 1 300px;min-height:340px;border-radius:14px;overflow:hidden;background:#24262b;position:relative}
+#avPanel{flex:1 1 320px;display:flex;flex-direction:column;gap:12px;overflow:auto;max-height:100%}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{background:#24262b;font-weight:500}
+.opts button.on{outline:2px solid #00a2ff}
+.sw{width:34px;height:34px;border-radius:8px;padding:0;border:2px solid #0000}
+.sw.on{border-color:#fff}
+/* play */
+#playStage,#studioStage{position:absolute;inset:0}
+.hud{position:absolute;pointer-events:none;inset:0}
+.hud>*{pointer-events:auto}
+#pMenu{position:absolute;top:10px;left:10px;display:flex;gap:6px}
+#pMenu button{background:#000a}
+#chatBox{position:absolute;top:56px;left:10px;width:min(340px,70vw);display:flex;flex-direction:column;gap:6px}
+#chatLog{max-height:180px;overflow:auto;background:#0006;border-radius:10px;padding:8px;font-size:14px;display:flex;flex-direction:column;gap:3px;text-shadow:0 1px 2px #000}
+#chatLog b{color:#7cc8ff}
+#chatLog .sys{color:#ffd43b}
+#chatIn{background:#000a;border:1px solid #fff3}
+#plist{position:absolute;top:10px;right:10px;background:#0007;border-radius:10px;padding:8px 12px;min-width:140px;font-size:14px}
+#plist div{padding:2px 0}
+#banner{position:absolute;top:30%;left:50%;transform:translateX(-50%);font-size:40px;font-weight:900;text-shadow:0 3px 10px #000;pointer-events:none;text-align:center}
+#joy{position:absolute;left:24px;bottom:24px;width:130px;height:130px;border-radius:50%;background:#fff2;border:2px solid #fff4;touch-action:none}
+#knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:#fff8}
+#jumpBtn{position:absolute;right:30px;bottom:36px;width:90px;height:90px;border-radius:50%;background:#fff3;border:2px solid #fff6;font-size:30px;touch-action:none}
+#ver{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-size:11px;color:#fff8;pointer-events:none}
+/* studio */
+#sBar{position:absolute;top:0;left:0;right:0;display:flex;gap:6px;padding:8px;background:#191a1df0;flex-wrap:wrap;align-items:center;border-bottom:1px solid #2b2d31}
+#sBar .g{display:flex;gap:4px;padding-right:8px;border-right:1px solid #333;flex-wrap:wrap}
+#sBar button.on{background:#00a2ff}
+#sProps{position:absolute;right:8px;top:110px;width:250px;max-height:calc(100% - 130px);overflow:auto;background:#191a1df0;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+#sProps label{color:#aaa;font-size:12px}
+.xyz{display:flex;gap:4px}
+.xyz input{padding:6px}
+#sGame{position:absolute;left:8px;top:110px;width:230px;background:#191a1df0;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+@media (max-width:700px){#sGame{display:none}#sGame.open{display:flex;z-index:5}#sProps{width:200px;top:auto;bottom:8px;max-height:45%}}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000d;padding:10px 18px;border-radius:10px;z-index:99;opacity:0;transition:.3s;pointer-events:none}
+#toast.on{opacity:1}
+.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;z-index:50}
+.modal>div{background:#1c1d21;padding:20px;border-radius:14px;width:min(420px,92vw);display:flex;flex-direction:column;gap:10px}
+.tpl{display:flex;gap:8px}
+.tpl button{flex:1;padding:16px 8px;background:#24262b}
+.tpl button.on{outline:2px solid #00a2ff}
+</style>
+</head>
+<body>
+
+<div id="login" class="page">
+  <div class="lbox">
+    <div class="logo"><b>B</b>lox</div>
+    <div id="lt" style="font-size:18px;font-weight:700">Přihlášení</div>
+    <div id="regWrap" class="hidden" style="display:flex;flex-direction:column;gap:12px"><input id="luser" placeholder="Uživatelské jméno" maxlength="20"></div>
+    <input id="lemail" type="email" placeholder="E-mail">
+    <input id="lpass" type="password" placeholder="Heslo">
+    <div class="lerr" id="lerr"></div>
+    <button class="pri" id="lgo">Přihlásit se</button>
+    <button id="lgoogle">Pokračovat přes Google</button>
+    <div class="muted"><span id="lq">Nemáš účet?</span> <span class="link" id="lswitch">Zaregistruj se</span></div>
+  </div>
+</div>
+
+<div id="home" class="page hidden">
+  <div class="top">
+    <div class="logo"><b>B</b>lox</div>
+    <div class="tabs">
+      <button data-t="Games" class="on">🎮 Hry</button>
+      <button data-t="Avatar">🧍 Avatar</button>
+      <button data-t="Create">🛠️ Studio</button>
+    </div>
+    <div class="sp"></div>
+    <div class="who"><span id="meName"></span><button class="sm" id="logout">Odhlásit</button></div>
+  </div>
+  <div class="content">
+    <div id="tabGames">
+      <h2>🟢 Kdo teď hraje</h2>
+      <div class="online" id="onlineList"></div>
+      <h2>🔥 Hry</h2>
+      <div class="grid" id="gameGrid"></div>
+    </div>
+    <div id="tabAvatar" class="hidden">
+      <div id="avStage"></div>
+      <div id="avPanel"></div>
+    </div>
+    <div id="tabCreate" class="hidden">
+      <div style="display:flex;align-items:center;gap:10px"><h2 style="flex:1">🛠️ Moje hry</h2><button class="grn" id="newGame">+ Nová hra</button></div>
+      <div class="grid" id="myGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="play" class="page hidden">
+  <div id="playStage"></div>
+  <div class="hud">
+    <div id="pMenu"><button id="pLeave">⬅ Odejít</button><button id="pChatT">💬</button><button id="pReset">🔄</button></div>
+    <div id="chatBox"><div id="chatLog"></div><input id="chatIn" maxlength="200" placeholder="Napiš zprávu (Enter / klávesa /)"></div>
+    <div id="plist"></div>
+    <div id="banner"></div>
+    <div id="joy" class="hidden"><div id="knob"></div></div>
+    <button id="jumpBtn" class="hidden">⤒</button>
+    <div id="ver"></div>
+  </div>
+</div>
+
+<div id="studio" class="page hidden">
+  <div id="studioStage"></div>
+  <div id="sBar">
+    <div class="g"><button id="sExit">⬅</button><button id="sGameT" class="sm">⚙️ Hra</button></div>
+    <div class="g"><button class="sm" data-add="box">+ Blok</button><button class="sm" data-add="ball">+ Koule</button><button class="sm" data-add="cyl">+ Válec</button></div>
+    <div class="g"><button class="sm on" id="mMove">✥ Posun</button><button class="sm" id="mScale">⤢ Velikost</button></div>
+    <div class="g"><button class="sm" id="sDup">⧉</button><button class="sm" id="sDel">🗑</button><button class="sm" id="sUndo">↶</button></div>
+    <div class="g" style="border:0"><button class="sm" id="sSave">💾 Uložit</button><button class="sm grn" id="sTest">▶ Test</button></div>
+  </div>
+  <div id="sGame">
+    <b>⚙️ Hra</b>
+    <label class="muted">Název</label><input id="gName" maxlength="40">
+    <label class="muted">Popis</label><textarea id="gDesc" rows="3" maxlength="300"></textarea>
+    <label class="muted">Barva oblohy</label><input id="gSky" type="color">
+    <label style="display:flex;gap:8px;align-items:center"><input id="gPub" type="checkbox" style="width:auto"> Zveřejnit (uvidí ji všichni)</label>
+    <div class="muted" id="gCount"></div>
+  </div>
+  <div id="sProps" class="hidden"></div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const VERSION = '1.0';
+const firebaseConfig = {"apiKey": "AIzaSyBovG00qfDWUBcS9pJlS_FwOH4etF9Sv0Y", "authDomain": "flex-bubble.firebaseapp.com", "projectId": "flex-bubble", "storageBucket": "flex-bubble.firebasestorage.app", "messagingSenderId": "171220277752", "appId": "1:171220277752:web:d5d68647bf1759db58de0d"};
+const APP = 'flex-bubble-prod-v10';
+const OWNER_EMAIL = 'mrwolfvrcz@gmail.com';
+const fb = initializeApp(firebaseConfig, 'blox');
+const auth = getAuth(fb), db = getFirestore(fb);
+const C = n => collection(db, 'artifacts', APP, 'public', 'data', n);
+const D = (n, id) => doc(db, 'artifacts', APP, 'public', 'data', n, id);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9_]/g, '').slice(0, 20);
+const r2 = v => Math.round(v * 100) / 100;
+const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+let me = null, prof = null, unsubHome = [];
+const isOwner = () => me && me.email === OWNER_EMAIL;
+
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2600); }
+function fail(e) { console.error(e); toast('⚠️ ' + (e.code || e.message || e)); }
+function show(p) { for (const id of ['login', 'home', 'play', 'studio']) $(id).classList.toggle('hidden', id !== p); }
+$('ver').textContent = 'Blox v' + VERSION;
+
+/* ================= RENDERER ================= */
+const R = new THREE.WebGLRenderer({ antialias: true });
+R.setPixelRatio(Math.min(devicePixelRatio, 2));
+R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+R.domElement.style.touchAction = 'none';
+let view = null;
+function mount(v) {
+  if (view && view.dispose) view.dispose();
+  view = v;
+  if (v) { v.host.appendChild(R.domElement); resize(); } else R.domElement.remove();
+}
+function resize() {
+  if (!view) return;
+  const w = view.host.clientWidth || innerWidth, h = view.host.clientHeight || innerHeight;
+  R.setSize(w, h); view.camera.aspect = w / h; view.camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+const clock = new THREE.Clock();
+R.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (view) { try { view.update && view.update(dt); } catch (e) { console.error(e); } R.render(view.scene, view.camera); }
+});
+
+function makeScene(sky) {
+  const s = new THREE.Scene();
+  s.background = new THREE.Color(sky || '#8fd3ff');
+  s.fog = new THREE.Fog(s.background, 250, 1000);
+  const hemi = new THREE.HemisphereLight('#ffffff', '#4a5060', 1.1);
+  const sun = new THREE.DirectionalLight('#ffffff', 1.8);
+  sun.position.set(60, 120, 40); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  const sc = sun.shadow.camera; sc.left = sc.bottom = -90; sc.right = sc.top = 90; sc.near = 1; sc.far = 400;
+  sun.shadow.bias = -0.0005;
+  s.add(hemi, sun, sun.target);
+  s.userData.sun = sun;
+  return s;
+}
+
+/* ================= AVATAR ================= */
+const AVDEF = { head: '#f5cd30', torso: '#0d69ac', arms: '#f5cd30', legs: '#a4bd47', face: 'smile', hat: 'none', hatColor: '#e03131', shirt: 'none', shirtColor: '#ffffff' };
+const PAL = ['#f5cd30','#ffcc99','#e8b38a','#c68642','#8d5524','#5c3a21','#ffffff','#a3a2a5','#1b1b1b','#0d69ac','#00a2ff','#c4281c','#ff7a00','#287f47','#a4bd47','#6b3fa0','#e84393','#ff8fab','#7bd389','#19e3ff'];
+const FACES = { smile: '🙂 Úsměv', grin: '😁 Smích', cool: '😎 Brýle', wink: '😉 Mrk', angry: '😠 Zlost', surprised: '😮 Údiv', sleepy: '😴 Ospalý', robot: '🤖 Robot' };
+const HATS = { none: 'Nic', cap: '🧢 Kšiltovka', top: '🎩 Cylindr', crown: '👑 Koruna', horns: '😈 Rohy', cat: '🐱 Uši', cone: '🎉 Kornout', halo: '😇 Svatozář' };
+const SHIRTS = { none: 'Nic', stripe: 'Proužky', star: '⭐ Hvězda', heart: '❤️ Srdce', num: '7️⃣ Číslo', bolt: '⚡ Blesk' };
+
+function canvasTex(cv) { const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
+function faceTex(av) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const g = cv.getContext('2d');
+  g.fillStyle = av.head; g.fillRect(0, 0, 128, 128);
+  g.fillStyle = '#111'; g.strokeStyle = '#111'; g.lineWidth = 6; g.lineCap = 'round';
+  const eye = (x, y, r = 7) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
+  const arc = (x, y, r, a, b) => { g.beginPath(); g.arc(x, y, r, a * Math.PI, b * Math.PI); g.stroke(); };
+  switch (av.face) {
+    case 'grin': eye(42, 48); eye(86, 48); g.beginPath(); g.moveTo(32, 72); g.quadraticCurveTo(64, 116, 96, 72); g.closePath(); g.fill(); break;
+    case 'cool': g.fillRect(22, 40, 36, 18); g.fillRect(70, 40, 36, 18); g.fillRect(56, 44, 16, 5); arc(64, 70, 20, 0.2, 0.8); break;
+    case 'wink': eye(42, 50); g.beginPath(); g.moveTo(76, 50); g.lineTo(96, 50); g.stroke(); arc(64, 68, 22, 0.15, 0.85); break;
+    case 'angry': eye(42, 56); eye(86, 56); g.beginPath(); g.moveTo(28, 36); g.lineTo(54, 46); g.moveTo(100, 36); g.lineTo(74, 46); g.stroke(); arc(64, 104, 20, 1.15, 1.85); break;
+    case 'surprised': eye(42, 46, 9); eye(86, 46, 9); g.beginPath(); g.arc(64, 86, 11, 0, 7); g.stroke(); break;
+    case 'sleepy': g.beginPath(); g.moveTo(30, 52); g.lineTo(54, 52); g.moveTo(74, 52); g.lineTo(98, 52); g.stroke(); g.beginPath(); g.arc(64, 84, 8, 0, 7); g.stroke(); break;
+    case 'robot': g.fillStyle = '#19e3ff'; g.fillRect(28, 40, 26, 14); g.fillRect(74, 40, 26, 14); g.fillStyle = '#111'; for (let i = 0; i < 5; i++) g.fillRect(32 + i * 13, 78, 8, 12); break;
+    default: eye(42, 50); eye(86, 50); arc(64, 64, 24, 0.15, 0.85);
+  }
+  return canvasTex(cv);
+}
+function shirtTex(av) {
+  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 128;
+  const g = cv.getContext('2d');
+  g.fillStyle = av.torso; g.fillRect(0, 0, 128, 128);
+  g.fillStyle = av.shirtColor; g.strokeStyle = av.shirtColor;
+  const star = (cx, cy, R1, R2) => { g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? R2 : R1, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath(); g.fill(); };
+  switch (av.shirt) {
+    case 'stripe': for (let y = 10; y < 128; y += 28) g.fillRect(0, y, 128, 12); break;
+    case 'star': star(64, 66, 40, 17); break;
+    case 'heart': g.beginPath(); g.moveTo(64, 104); g.bezierCurveTo(10, 66, 30, 18, 64, 44); g.bezierCurveTo(98, 18, 118, 66, 64, 104); g.fill(); break;
+    case 'num': g.font = 'bold 96px system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('7', 64, 70); break;
+    case 'bolt': g.beginPath(); g.moveTo(74, 10); g.lineTo(34, 72); g.lineTo(62, 72); g.lineTo(50, 120); g.lineTo(96, 52); g.lineTo(68, 52); g.closePath(); g.fill(); break;
+  }
+  return canvasTex(cv);
+}
+const mat = (c, map) => new THREE.MeshStandardMaterial({ color: map ? 0xffffff : c, map: map || null, roughness: 0.6 });
+function makeHat(av) {
+  const c = new THREE.MeshStandardMaterial({ color: av.hatColor, roughness: 0.5 });
+  const g = new THREE.Group();
+  const M = (geo, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(geo, m || c); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  switch (av.hat) {
+    case 'cap': M(new THREE.CylinderGeometry(0.66, 0.66, 0.35, 24), c, 0, 0.12, 0); M(new THREE.BoxGeometry(1.1, 0.08, 0.6), c, 0, -0.02, 0.75); break;
+    case 'top': M(new THREE.CylinderGeometry(0.9, 0.9, 0.08, 24), c, 0, 0, 0); M(new THREE.CylinderGeometry(0.55, 0.55, 1, 24), c, 0, 0.5, 0); break;
+    case 'crown': { const gold = new THREE.MeshStandardMaterial({ color: '#ffd43b', metalness: 0.8, roughness: 0.25 }); M(new THREE.CylinderGeometry(0.62, 0.62, 0.35, 8), gold, 0, 0.15, 0); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; M(new THREE.ConeGeometry(0.12, 0.3, 4), gold, Math.sin(a) * 0.55, 0.45, Math.cos(a) * 0.55); } break; }
+    case 'horns': { M(new THREE.ConeGeometry(0.15, 0.6, 12), c, -0.45, 0.2, 0).rotation.z = 0.4; M(new THREE.ConeGeometry(0.15, 0.6, 12), c, 0.45, 0.2, 0).rotation.z = -0.4; break; }
+    case 'cat': M(new THREE.ConeGeometry(0.25, 0.5, 4), c, -0.38, 0.2, 0); M(new THREE.ConeGeometry(0.25, 0.5, 4), c, 0.38, 0.2, 0); break;
+    case 'cone': M(new THREE.ConeGeometry(0.5, 1.2, 20), c, 0, 0.6, 0); break;
+    case 'halo': { const m = new THREE.MeshStandardMaterial({ color: '#fff3a0', emissive: '#ffe066', emissiveIntensity: 0.8 }); M(new THREE.TorusGeometry(0.5, 0.08, 8, 24), m, 0, 0.7, 0).rotation.x = Math.PI / 2; break; }
+    default: return null;
+  }
+  return g;
+}
+function makeAvatar(av0) {
+  const av = { ...AVDEF, ...(av0 || {}) };
+  const g = new THREE.Group();
+  const B = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; return o; };
+  const headM = [0, 1, 2, 3, 4, 5].map(i => i === 4 ? mat(0, faceTex(av)) : mat(av.head));
+  const torsoM = [0, 1, 2, 3, 4, 5].map(i => i === 4 && av.shirt !== 'none' ? mat(0, shirtTex(av)) : mat(av.torso));
+  const head = B(1.2, 1.2, 1.2, headM, 0, 4.6, 0);
+  const torso = B(2, 2, 1, torsoM, 0, 3, 0);
+  const limb = (c, x, y) => { const p = new THREE.Group(); p.position.set(x, y, 0); p.add(B(1, 2, 1, mat(c), 0, -1, 0)); return p; };
+  const la = limb(av.arms, -1.5, 4), ra = limb(av.arms, 1.5, 4), ll = limb(av.legs, -0.5, 2), rl = limb(av.legs, 0.5, 2);
+  g.add(head, torso, la, ra, ll, rl);
+  const hat = makeHat(av); if (hat) { hat.position.y = 5.2; g.add(hat); }
+  g.userData = { la, ra, ll, rl, phase: 0 };
+  return g;
+}
+function animAvatar(g, speed, dt, air) {
+  const u = g.userData; if (!u.la) return;
+  const lerp = (o, t) => { o.rotation.x += (t - o.rotation.x) * Math.min(1, dt * 14); };
+  if (air) { lerp(u.la, -2.7); lerp(u.ra, -2.7); lerp(u.ll, 0); lerp(u.rl, 0); return; }
+  if (speed > 0.5) {
+    u.phase += dt * speed * 0.55;
+    const s = Math.sin(u.phase) * 0.9 * Math.min(1, speed / 16);
+    u.la.rotation.x = s; u.ra.rotation.x = -s; u.ll.rotation.x = -s; u.rl.rotation.x = s;
+  } else { lerp(u.la, 0); lerp(u.ra, 0); lerp(u.ll, 0); lerp(u.rl, 0); }
+}
+function textSprite(text, bg = 'rgba(0,0,0,.45)', fg = '#fff', size = 0.8) {
+  const cv = document.createElement('canvas'); const g = cv.getContext('2d');
+  g.font = 'bold 40px system-ui'; const w = Math.ceil(g.measureText(text).width) + 28;
+  cv.width = w; cv.height = 60;
+  g.font = 'bold 40px system-ui'; g.fillStyle = bg;
+  g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, 60, 18) : g.rect(0, 0, w, 60); g.fill();
+  g.fillStyle = fg; g.textBaseline = 'middle'; g.fillText(text, 14, 32);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(cv), depthTest: false, transparent: true }));
+  s.scale.set(w / 60 * size, size, 1); s.renderOrder = 10;
+  return s;
+}
+
+/* ================= PARTS ================= */
+const GEO = { box: new THREE.BoxGeometry(1, 1, 1), ball: new THREE.SphereGeometry(0.5, 28, 18), cyl: new THREE.CylinderGeometry(0.5, 0.5, 1, 28) };
+const KINDS = { normal: 'Obyčejný', lava: '🔥 Láva (zabije)', spawn: '🚩 Spawn / checkpoint', jump: '🦘 Trampolína', speed: '⚡ Zrychlení', win: '🏆 Cíl', ghost: '👻 Duch (projdeš)' };
+const KCOL = { lava: '#ff4d00', spawn: '#cfd8dc', jump: '#ff66c4', speed: '#ffd43b', win: '#ffd700' };
+let gridImg = null;
+function gridTex(sx, sz) {
+  if (!gridImg) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+    const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 64, 64);
+    g.strokeStyle = 'rgba(0,0,0,.14)'; g.lineWidth = 3; g.strokeRect(0, 0, 64, 64);
+    gridImg = cv;
+  }
+  const t = new THREE.CanvasTexture(gridImg); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(sx / 4, sz / 4); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function partMat(p) {
+  const tr = +p.tr || 0, glow = p.k === 'lava' || p.k === 'win' || p.k === 'speed';
+  const big = p.t === 'box' && p.s[0] >= 24 && p.s[2] >= 24;
+  return new THREE.MeshStandardMaterial({ color: p.c, roughness: 0.8, map: big ? gridTex(p.s[0], p.s[2]) : null, transparent: tr > 0, opacity: 1 - tr, emissive: glow ? p.c : '#000', emissiveIntensity: glow ? 0.45 : 0 });
+}
+function partMesh(p) {
+  const m = new THREE.Mesh(GEO[p.t] || GEO.box, partMat(p));
+  m.position.fromArray(p.p); m.scale.fromArray(p.s);
+  m.castShadow = (+p.tr || 0) < 0.5; m.receiveShadow = true;
+  m.userData.part = p;
+  return m;
+}
+const baseplate = () => ({ t: 'box', p: [0, -0.5, 0], s: [256, 1, 256], c: '#5f8f3e', k: 'normal' });
+function tplEmpty() { return [baseplate(), { t: 'box', p: [0, 0.25, 0], s: [6, 0.5, 6], c: '#cfd8dc', k: 'spawn' }]; }
+function tplObby() {
+  const P = [baseplate(), { t: 'box', p: [0, 0.25, 0], s: [8, 0.5, 8], c: '#cfd8dc', k: 'spawn' }];
+  const cols = ['#ff6b6b', '#ffd43b', '#69db7c', '#4dabf7', '#da77f2'];
+  let y = 1, z = 4, x = 0;
+  for (let i = 0; i < 16; i++) {
+    z += 8; if (i % 2) y += 1; x = Math.round(Math.sin(i * 1.1) * 6);
+    let k = 'normal', c = cols[i % 5];
+    if (i === 7) { k = 'spawn'; c = '#cfd8dc'; }
+    if (i === 11) { k = 'jump'; c = KCOL.jump; }
+    P.push({ t: i % 5 === 3 ? 'cyl' : 'box', p: [x, y, z], s: [5, 1, 5], c, k });
+    if (i === 11) { z += 6; y += 6; }
+  }
+  P.push({ t: 'box', p: [0, y + 0.5, z + 12], s: [12, 1, 12], c: KCOL.win, k: 'win' });
+  P.push({ t: 'box', p: [0, 0.1, (z + 18) / 2 + 3], s: [50, 0.2, z + 12], c: KCOL.lava, k: 'lava' });
+  return P;
+}
+function partBox(p) {
+  return { min: [p.p[0] - p.s[0] / 2, p.p[1] - p.s[1] / 2, p.p[2] - p.s[2] / 2], max: [p.p[0] + p.s[0] / 2, p.p[1] + p.s[1] / 2, p.p[2] + p.s[2] / 2], p };
+}
+
+/* ================= LOGIN ================= */
+let regMode = false;
+$('lswitch').onclick = () => {
+  regMode = !regMode;
+  $('regWrap').classList.toggle('hidden', !regMode);
+  $('lgo').textContent = regMode ? 'Vytvořit účet' : 'Přihlásit se';
+  $('lt').textContent = regMode ? 'Nový účet' : 'Přihlášení';
+  $('lq').textContent = regMode ? 'Už máš účet?' : 'Nemáš účet?';
+  $('lswitch').textContent = regMode ? 'Přihlas se' : 'Zaregistruj se';
+};
+const authErr = c => ({ 'auth/invalid-credential': 'Špatný e-mail nebo heslo', 'auth/email-already-in-use': 'Tenhle e-mail už má účet', 'auth/weak-password': 'Heslo musí mít aspoň 6 znaků', 'auth/invalid-email': 'Neplatný e-mail', 'auth/too-many-requests': 'Moc pokusů, zkus to za chvíli', 'auth/popup-closed-by-user': 'Okno se zavřelo' }[c] || c);
+let wantHandle = '';
+async function doLogin() {
+  $('lerr').textContent = '';
+  try {
+    if (regMode) {
+      wantHandle = slug($('luser').value);
+      if (wantHandle.length < 3) { $('lerr').textContent = 'Jméno aspoň 3 znaky (a-z, 0-9, _)'; return; }
+      const s = await getDoc(D('bx_names', wantHandle));
+      if (s.exists()) { $('lerr').textContent = 'Jméno je zabrané'; return; }
+      await createUserWithEmailAndPassword(auth, $('lemail').value.trim(), $('lpass').value);
+    } else await signInWithEmailAndPassword(auth, $('lemail').value.trim(), $('lpass').value);
+  } catch (e) { $('lerr').textContent = authErr(e.code); }
+}
+$('lgo').onclick = doLogin;
+$('lpass').onkeydown = e => { if (e.key === 'Enter') doLogin(); };
+$('lgoogle').onclick = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { $('lerr').textContent = authErr(e.code); } };
+$('logout').onclick = () => signOut(auth);
+
+async function setupUser(u) {
+  const ref = D('bx_users', u.uid), s = await getDoc(ref);
+  const cur = s.exists() ? s.data() : {};
+  let name = cur.name;
+  if (!name) {
+    let base = wantHandle || slug(u.email === OWNER_EMAIL ? 'Wolfe' : (u.displayName || (u.email || 'hrac').split('@')[0])) || 'hrac';
+    name = base; let n = 0;
+    while (n < 8) { const c = await getDoc(D('bx_names', name)); if (!c.exists() || c.data().uid === u.uid) break; name = base.slice(0, 15) + Math.floor(Math.random() * 9000 + 1000); n++; }
+    await setDoc(D('bx_names', name), { uid: u.uid });
+  }
+  prof = { name, avatar: { ...AVDEF, ...(cur.avatar || {}) }, since: cur.since || Date.now() };
+  await setDoc(ref, { name, avatar: prof.avatar, since: prof.since, seen: Date.now() }, { merge: true });
+}
+
+onAuthStateChanged(auth, async u => {
+  if (play) leavePlay();
+  if (studio) closeStudio(false);
+  unsubHome.forEach(f => f()); unsubHome = [];
+  if (!u) { me = null; mount(null); show('login'); return; }
+  me = u;
+  try { await setupUser(u); } catch (e) { fail(e); return; }
+  $('meName').textContent = '🧍 ' + prof.name + (isOwner() ? ' 👑' : '');
+  goHome();
+  const j = new URLSearchParams(location.search).get('hra');
+  if (j) startPlay(j);
+});
+
+/* ================= HOME ================= */
+let homeTab = 'Games', presAll = [], gamesCache = {};
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.t));
+function setTab(t) {
+  homeTab = t;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  for (const k of ['Games', 'Avatar', 'Create']) $('tab' + k).classList.toggle('hidden', k !== t);
+  if (t === 'Avatar') openAvatar(); else if (view && view.kind === 'avatar') mount(null);
+  if (t === 'Games') loadGames();
+  if (t === 'Create') loadMine();
+}
+function goHome() {
+  show('home'); setTab(homeTab);
+  if (!unsubHome.length) unsubHome.push(onSnapshot(C('bx_pres'), s => { presAll = s.docs.map(d => d.data()); renderOnline(); renderGrid(); }, () => {}));
+}
+const fresh = p => Date.now() - (p.t || 0) < 15000;
+function countIn(g) { return presAll.filter(p => p.g === g && fresh(p)).length; }
+function thumbStyle(g) {
+  const cs = (g.parts || []).filter(p => p.s[0] < 100).map(p => p.c);
+  const a = cs[1] || '#00a2ff', b = cs[4] || '#6b3fa0';
+  return `background:linear-gradient(135deg,${a},${b})`;
+}
+async function loadGames() {
+  try {
+    const s = await getDocs(query(C('bx_games'), where('published', '==', true)));
+    gamesCache = {}; s.docs.forEach(d => gamesCache[d.id] = { id: d.id, ...d.data() });
+    renderGrid(); renderOnline();
+  } catch (e) { fail(e); }
+}
+function renderGrid() {
+  if (homeTab !== 'Games') return;
+  const list = Object.values(gamesCache).sort((a, b) => countIn(b.id) - countIn(a.id) || (b.visits || 0) - (a.visits || 0));
+  $('gameGrid').innerHTML = list.length ? list.map(g => `
+    <div class="card"><div class="thumb" style="${thumbStyle(g)}">${esc((g.name || '?')[0].toUpperCase())}</div>
+    <div class="b"><div class="n">${esc(g.name)}</div><div class="muted">od ${esc(g.ownerName)}</div>
+    <div class="muted">🟢 ${countIn(g.id)} hraje · 👁 ${g.visits || 0}</div>
+    <div class="row"><button class="grn sm" data-play="${g.id}">▶ Hrát</button>${isOwner() && g.owner !== me.uid ? `<button class="red sm" data-del="${g.id}">🗑</button>` : ''}</div></div></div>`).join('')
+    : '<div class="muted">Zatím tu nejsou žádné hry. Vytvoř první ve Studiu! 🛠️</div>';
+}
+function renderOnline() {
+  if (homeTab !== 'Games') return;
+  const on = presAll.filter(p => fresh(p) && p.uid !== me?.uid);
+  $('onlineList').innerHTML = on.length ? on.map(p => `<div class="orow"><span class="dot"></span><b>${esc(p.name)}</b><span class="muted" style="flex:1">hraje ${esc(gamesCache[p.g]?.name || p.gn || 'hru')}</span><button class="pri sm" data-play="${p.g}">Připojit se</button></div>`).join('')
+    : '<div class="muted">Nikdo zrovna nehraje. Pozvi kámoše! 👋</div>';
+}
+document.addEventListener('click', async e => {
+  const pl = e.target.closest('[data-play]'); if (pl) { startPlay(pl.dataset.play); return; }
+  const ed = e.target.closest('[data-edit]'); if (ed) { openStudio(ed.dataset.edit); return; }
+  const dl = e.target.closest('[data-del]');
+  if (dl && confirm('Opravdu smazat tuhle hru?')) { try { await deleteDoc(D('bx_games', dl.dataset.del)); toast('Smazáno 🗑'); loadGames(); loadMine(); } catch (er) { fail(er); } }
+});
+async function loadMine() {
+  try {
+    const s = await getDocs(query(C('bx_games'), where('owner', '==', me.uid)));
+    const list = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+    $('myGrid').innerHTML = list.length ? list.map(g => `
+      <div class="card"><div class="thumb" style="${thumbStyle(g)}">${esc((g.name || '?')[0].toUpperCase())}</div>
+      <div class="b"><div class="n">${esc(g.name)}</div><div class="muted">${g.published ? '🌍 Zveřejněno' : '🔒 Soukromé'} · ${(g.parts || []).length} dílů</div>
+      <div class="row"><button class="pri sm" data-edit="${g.id}">✏️ Upravit</button><button class="grn sm" data-play="${g.id}">▶</button><button class="red sm" data-del="${g.id}">🗑</button></div></div></div>`).join('')
+      : '<div class="muted">Ještě nemáš žádnou hru. Klikni na + Nová hra 🚀</div>';
+  } catch (e) { fail(e); }
+}
+$('newGame').onclick = () => {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div><b style="font-size:18px">🚀 Nová hra</b><input id="nName" placeholder="Název hry" maxlength="40">
+    <div class="tpl"><button data-tp="empty" class="on">⬜<br>Prázdná</button><button data-tp="obby">🧗<br>Obby</button></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button id="nNo">Zrušit</button><button class="grn" id="nGo">Vytvořit</button></div></div>`;
+  document.body.appendChild(m);
+  let tp = 'empty';
+  m.querySelectorAll('[data-tp]').forEach(b => b.onclick = () => { tp = b.dataset.tp; m.querySelectorAll('[data-tp]').forEach(x => x.classList.toggle('on', x === b)); });
+  m.querySelector('#nNo').onclick = () => m.remove();
+  m.querySelector('#nGo').onclick = async () => {
+    const name = m.querySelector('#nName').value.trim() || (tp === 'obby' ? 'Moje Obby' : 'Moje hra');
+    try {
+      const r = await addDoc(C('bx_games'), { name, desc: '', sky: '#8fd3ff', parts: tp === 'obby' ? tplObby() : tplEmpty(), owner: me.uid, ownerName: prof.name, published: false, visits: 0, created: Date.now(), updated: Date.now() });
+      m.remove(); openStudio(r.id);
+    } catch (e) { fail(e); }
+  };
+};
+
+/* ================= AVATAR EDITOR ================= */
+let avEdit = null, avSlot = 'torso';
+function openAvatar() {
+  avEdit = { ...prof.avatar };
+  const scene = makeScene('#24262b'); scene.fog = null;
+  const ground = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 0.3, 40), new THREE.MeshStandardMaterial({ color: '#33363d' }));
+  ground.position.y = -0.15; ground.receiveShadow = true; scene.add(ground);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100); camera.position.set(0, 3.6, 13); camera.lookAt(0, 2.8, 0);
+  let fig = makeAvatar(avEdit); scene.add(fig);
+  let rot = 0.4, drag = null;
+  const el = R.domElement;
+  const pd = e => drag = e.clientX, pm = e => { if (drag !== null) { rot += (e.clientX - drag) * 0.01; drag = e.clientX; } }, pu = () => drag = null;
+  el.addEventListener('pointerdown', pd); addEventListener('pointermove', pm); addEventListener('pointerup', pu);
+  mount({ kind: 'avatar', scene, camera, host: $('avStage'),
+    update(dt) { if (drag === null) rot += dt * 0.3; fig.rotation.y = rot; },
+    rebuild() { scene.remove(fig); fig = makeAvatar(avEdit); scene.add(fig); },
+    dispose() { el.removeEventListener('pointerdown', pd); removeEventListener('pointermove', pm); removeEventListener('pointerup', pu); } });
+  renderAvPanel();
+}
+function renderAvPanel() {
+  const slots = { head: 'Hlava', torso: 'Tělo', arms: 'Ruce', legs: 'Nohy', hatColor: 'Čepice', shirtColor: 'Potisk' };
+  const opt = (obj, key) => Object.entries(obj).map(([k, v]) => `<button data-av="${key}" data-v="${k}" class="${avEdit[key] === k ? 'on' : ''}">${v}</button>`).join('');
+  $('avPanel').innerHTML = `
+    <h2>🧍 Můj avatar</h2>
+    <div><b>🎨 Barvy</b><div class="opts" style="margin:6px 0">${Object.entries(slots).map(([k, v]) => `<button data-slot="${k}" class="${avSlot === k ? 'on' : ''}">${v}</button>`).join('')}</div>
+    <div class="opts">${PAL.map(c => `<button class="sw ${avEdit[avSlot] === c ? 'on' : ''}" data-col="${c}" style="background:${c}"></button>`).join('')}<input type="color" id="avPick" value="${avEdit[avSlot]}" style="width:44px;height:34px;padding:2px"></div></div>
+    <div><b>😀 Obličej</b><div class="opts" style="margin-top:6px">${opt(FACES, 'face')}</div></div>
+    <div><b>🎩 Čepice</b><div class="opts" style="margin-top:6px">${opt(HATS, 'hat')}</div></div>
+    <div><b>👕 Tričko</b><div class="opts" style="margin-top:6px">${opt(SHIRTS, 'shirt')}</div></div>
+    <div style="display:flex;gap:8px"><button class="grn" id="avSave">💾 Uložit avatar</button><button id="avRand">🎲 Náhodný</button></div>`;
+  const P = $('avPanel'), re = () => { view?.rebuild && view.rebuild(); renderAvPanel(); };
+  P.querySelectorAll('[data-slot]').forEach(b => b.onclick = () => { avSlot = b.dataset.slot; renderAvPanel(); });
+  P.querySelectorAll('[data-col]').forEach(b => b.onclick = () => { avEdit[avSlot] = b.dataset.col; re(); });
+  $('avPick').oninput = e => { avEdit[avSlot] = e.target.value; view?.rebuild && view.rebuild(); };
+  P.querySelectorAll('[data-av]').forEach(b => b.onclick = () => { avEdit[b.dataset.av] = b.dataset.v; re(); });
+  $('avRand').onclick = () => {
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    avEdit = { head: pick(PAL), torso: pick(PAL), arms: pick(PAL), legs: pick(PAL), face: pick(Object.keys(FACES)), hat: pick(Object.keys(HATS)), hatColor: pick(PAL), shirt: pick(Object.keys(SHIRTS)), shirtColor: pick(PAL) };
+    re();
+  };
+  $('avSave').onclick = async () => { try { prof.avatar = { ...avEdit }; await updateDoc(D('bx_users', me.uid), { avatar: prof.avatar }); toast('Avatar uložen ✅'); } catch (e) { fail(e); } };
+}
+
+/* ================= PLAY ================= */
+let play = null;
+const keys = {};
+addEventListener('keydown', e => {
+  if (!play) return;
+  if (document.activeElement === $('chatIn')) { if (e.key === 'Escape') $('chatIn').blur(); return; }
+  if (e.key === '/' || e.key === 'Enter') { e.preventDefault(); $('chatIn').focus(); return; }
+  keys[e.code] = true; if (e.code === 'Space') e.preventDefault();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+async function startPlay(id, testGame) {
+  if (play) leavePlay();
+  let g;
+  if (testGame) g = testGame;
+  else {
+    try { const s = await getDoc(D('bx_games', id)); if (!s.exists()) { toast('Hra neexistuje 😕'); return; } g = { id, ...s.data() }; }
+    catch (e) { fail(e); return; }
+    if (!g.published && g.owner !== me.uid && !isOwner()) { toast('Tahle hra je soukromá 🔒'); return; }
+    updateDoc(D('bx_games', id), { visits: increment(1) }).catch(() => {});
+  }
+  show('play');
+  const scene = makeScene(g.sky);
+  const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 2000);
+  const solids = [], touch = [];
+  let spawn = null;
+  for (const p of g.parts || []) {
+    scene.add(partMesh(p));
+    const b = partBox(p);
+    if (p.k !== 'ghost') solids.push(b);
+    if (p.k && p.k !== 'normal' && p.k !== 'ghost') touch.push(b);
+    if (p.k === 'spawn' && !spawn) spawn = [p.p[0], b.max[1] + 0.01, p.p[2]];
+  }
+  spawn = spawn || [0, 3, 0];
+  const fig = makeAvatar(prof.avatar); scene.add(fig);
+  const tag = textSprite(prof.name); tag.position.y = 6.3; fig.add(tag);
+  const P = { pos: new THREE.Vector3(...spawn), vel: new THREE.Vector3(), ground: false, ry: 0, dead: 0, speedT: 0, check: spawn.slice(), won: false, lastCheck: null };
+  const cam = { yaw: Math.PI, pitch: 0.35, dist: 16 };
+  const HW = 0.9, HH = 5;
+  const ov = (b, x, y, z, e = 0) => x + HW + e > b.min[0] && x - HW - e < b.max[0] && y + HH + e > b.min[1] && y - e < b.max[1] && z + HW + e > b.min[2] && z - HW - e < b.max[2];
+  const blocked = (x, y, z) => solids.some(b => ov(b, x, y, z));
+  function moveAxis(ax, d, wasGround) {
+    if (!d) return;
+    const pos = P.pos;
+    pos.setComponent(ax, pos.getComponent(ax) + d);
+    for (const b of solids) {
+      if (!ov(b, pos.x, pos.y, pos.z)) continue;
+      if (ax === 1) {
+        if (d < 0) { pos.y = b.max[1]; P.ground = true; } else pos.y = b.min[1] - HH;
+        P.vel.y = 0;
+      } else {
+        const up = b.max[1] - pos.y;
+        if (wasGround && up > 0 && up <= 1.3 && !blocked(pos.x, b.max[1] + 0.01, pos.z)) { pos.y = b.max[1] + 0.01; continue; }
+        pos.setComponent(ax, d > 0 ? b.min[ax] - HW - 0.001 : b.max[ax] + HW + 0.001);
+      }
+    }
+  }
+  const others = {};
+  const banner = (t, ms = 2500) => { $('banner').textContent = t; clearTimeout(banner.t); if (ms) banner.t = setTimeout(() => $('banner').textContent = '', ms); };
+  function die() {
+    if (P.dead > 0) return;
+    P.dead = 1.6; fig.visible = false; banner('💥 Au!', 1500);
+  }
+  function respawn() { P.pos.set(...P.check); P.vel.set(0, 0, 0); fig.visible = true; P.dead = 0; }
+  const sysMsg = t => { const d = document.createElement('div'); d.className = 'sys'; d.textContent = t; $('chatLog').appendChild(d); $('chatLog').scrollTop = 1e9; };
+
+  // camera input
+  let camPtr = null, lx = 0, ly = 0;
+  const el = R.domElement;
+  const cpd = e => { if (camPtr !== null) return; camPtr = e.pointerId; lx = e.clientX; ly = e.clientY; };
+  const cpm = e => { if (e.pointerId !== camPtr) return; cam.yaw -= (e.clientX - lx) * 0.006; cam.pitch = Math.max(-0.3, Math.min(1.35, cam.pitch + (e.clientY - ly) * 0.005)); lx = e.clientX; ly = e.clientY; };
+  const cpu = e => { if (e.pointerId === camPtr) camPtr = null; };
+  const wheel = e => { cam.dist = Math.max(4, Math.min(60, cam.dist * (e.deltaY > 0 ? 1.1 : 0.9))); };
+  el.addEventListener('pointerdown', cpd); addEventListener('pointermove', cpm); addEventListener('pointerup', cpu); addEventListener('pointercancel', cpu); el.addEventListener('wheel', wheel, { passive: true });
+  // touch controls
+  const joy = { x: 0, y: 0, id: null }; let jumpHeld = false;
+  $('joy').classList.toggle('hidden', !isTouch); $('jumpBtn').classList.toggle('hidden', !isTouch);
+  const J = $('joy'), K = $('knob');
+  J.onpointerdown = e => { joy.id = e.pointerId; J.setPointerCapture(e.pointerId); J.onpointermove(e); };
+  J.onpointermove = e => {
+    if (e.pointerId !== joy.id) return;
+    const r = J.getBoundingClientRect(); let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    const l = Math.hypot(dx, dy), m = 50; if (l > m) { dx *= m / l; dy *= m / l; }
+    joy.x = dx / m; joy.y = dy / m; K.style.left = (40 + dx) + 'px'; K.style.top = (40 + dy) + 'px';
+  };
+  J.onpointerup = J.onpointercancel = () => { joy.id = null; joy.x = joy.y = 0; K.style.left = K.style.top = '40px'; };
+  $('jumpBtn').onpointerdown = e => { e.preventDefault(); jumpHeld = true; };
+  $('jumpBtn').onpointerup = $('jumpBtn').onpointercancel = $('jumpBtn').onpointerleave = () => jumpHeld = false;
+
+  // network
+  const online = !testGame;
+  const presId = online ? g.id + '_' + me.uid : null;
+  let sendT = 0, lastSent = '', unsubs = [], joinT = Date.now();
+  if (online) {
+    unsubs.push(onSnapshot(query(C('bx_pres'), where('g', '==', g.id)), s => {
+      const seen = new Set();
+      s.docs.forEach(d => {
+        const o = d.data(); if (o.uid === me.uid || !fresh(o)) return;
+        seen.add(o.uid);
+        let r = others[o.uid];
+        if (!r || r.avKey !== JSON.stringify(o.av)) {
+          if (r) scene.remove(r.fig);
+          const f = makeAvatar(o.av); const t = textSprite(o.name); t.position.y = 6.3; f.add(t);
+          f.position.set(o.x, o.y, o.z); scene.add(f);
+          if (!r) sysMsg('👋 ' + o.name + ' se připojil');
+          r = others[o.uid] = { fig: f, name: o.name, avKey: JSON.stringify(o.av), tgt: new THREE.Vector3(o.x, o.y, o.z), ry: o.ry || 0, sp: 0, air: false, bubble: null };
+        }
+        r.tgt.set(o.x, o.y, o.z); r.ry = o.ry || 0; r.sp = o.sp || 0; r.air = !!o.air; r.fig.visible = !o.dead; r.t = o.t;
+      });
+      for (const u of Object.keys(others)) if (!seen.has(u)) { scene.remove(others[u].fig); sysMsg('🚪 ' + others[u].name + ' odešel'); delete others[u]; }
+      renderPlist();
+    }, () => {}));
+    unsubs.push(onSnapshot(query(C('bx_chat'), where('g', '==', g.id)), s => {
+      const msgs = s.docs.map(d => d.data()).filter(m => m.t > joinT - 600000).sort((a, b) => a.t - b.t).slice(-60);
+      const log = $('chatLog'); log.innerHTML = msgs.map(m => `<div><b>${esc(m.name)}:</b> ${esc(m.text)}</div>`).join(''); log.scrollTop = 1e9;
+      s.docChanges().forEach(ch => {
+        if (ch.type !== 'added') return; const m = ch.doc.data(); if (m.t < joinT) return;
+        const holder = m.uid === me.uid ? fig : others[m.uid]?.fig; if (!holder) return;
+        if (holder.userData.bubble) holder.remove(holder.userData.bubble);
+        const txt = m.text.length > 40 ? m.text.slice(0, 40) + '…' : m.text;
+        const b = textSprite(txt, 'rgba(255,255,255,.95)', '#111', 0.75); b.position.y = 7.4; holder.add(b); holder.userData.bubble = b;
+        setTimeout(() => { if (holder.userData.bubble === b) { holder.remove(b); holder.userData.bubble = null; } }, 7000);
+      });
+    }, () => {}));
+  }
+  function renderPlist() { $('plist').innerHTML = '<b>👥 Hráči</b>' + [prof.name, ...Object.values(others).map(o => o.name)].map(n => `<div>${esc(n)}</div>`).join(''); }
+  renderPlist();
+  $('chatLog').innerHTML = '';
+  sysMsg(testGame ? '🧪 Testovací režim (jen ty)' : '🎮 Vítej ve hře ' + g.name + '!');
+  $('pLeave').textContent = testGame ? '⬅ Zpět do Studia' : '⬅ Odejít';
+
+  play = { g, test: !!testGame, presId, unsubs, die, respawn,
+    dispose() { el.removeEventListener('pointerdown', cpd); removeEventListener('pointermove', cpm); removeEventListener('pointerup', cpu); removeEventListener('pointercancel', cpu); el.removeEventListener('wheel', wheel); } };
+
+  const fwd = new THREE.Vector3(), right = new THREE.Vector3(), mv = new THREE.Vector3();
+  mount({ kind: 'play', scene, camera, host: $('playStage'), dispose: play.dispose,
+    update(dt) {
+      // input
+      let ix = 0, iz = 0;
+      if (keys.KeyW || keys.ArrowUp) iz += 1; if (keys.KeyS || keys.ArrowDown) iz -= 1;
+      if (keys.KeyD || keys.ArrowRight) ix += 1; if (keys.KeyA || keys.ArrowLeft) ix -= 1;
+      ix += joy.x; iz -= joy.y;
+      fwd.set(-Math.sin(cam.yaw), 0, -Math.cos(cam.yaw)); right.set(Math.cos(cam.yaw), 0, -Math.sin(cam.yaw));
+      mv.set(0, 0, 0).addScaledVector(fwd, iz).addScaledVector(right, ix);
+      if (mv.lengthSq() > 1) mv.normalize();
+      if (P.dead > 0) { P.dead -= dt; if (P.dead <= 0) respawn(); mv.set(0, 0, 0); }
+      else {
+        P.speedT = Math.max(0, P.speedT - dt);
+        const spd = 16 * (P.speedT > 0 ? 2 : 1);
+        P.vel.x = mv.x * spd; P.vel.z = mv.z * spd;
+        if ((keys.Space || jumpHeld) && P.ground) P.vel.y = 50;
+        P.vel.y = Math.max(-160, P.vel.y - 196.2 * dt);
+        const wg = P.ground; P.ground = false;
+        moveAxis(0, P.vel.x * dt, wg); moveAxis(2, P.vel.z * dt, wg); moveAxis(1, P.vel.y * dt, wg);
+        if (P.vel.y === 0 && !P.ground && blocked(P.pos.x, P.pos.y - 0.05, P.pos.z)) P.ground = true;
+        for (const b of touch) {
+          if (!ov(b, P.pos.x, P.pos.y, P.pos.z, 0.08)) continue;
+          const k = b.p.k;
+          if (k === 'lava') die();
+          else if (k === 'spawn') { if (P.lastCheck !== b) { P.lastCheck = b; P.check = [b.p.p[0], b.max[1] + 0.01, b.p.p[2]]; if (b.max[1] > 1) banner('🚩 Checkpoint!', 1200); } }
+          else if (k === 'jump') { if (P.vel.y < 80) { P.vel.y = 95; P.ground = false; } }
+          else if (k === 'speed') { if (P.speedT < 0.1) banner('⚡ Rychlost!', 1000); P.speedT = 3; }
+          else if (k === 'win' && !P.won) {
+            P.won = true; banner('🏆 VYHRÁL JSI! 🏆', 4000);
+            if (online) addDoc(C('bx_chat'), { g: g.id, uid: me.uid, name: '🏆', text: prof.name + ' dokončil hru!', t: Date.now() }).catch(() => {});
+          }
+        }
+        if (P.pos.y < -60) die();
+        if (mv.lengthSq() > 0.01) { const t = Math.atan2(mv.x, mv.z); let d = t - P.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); P.ry += d * Math.min(1, dt * 14); }
+      }
+      fig.position.copy(P.pos); fig.rotation.y = P.ry;
+      const sp = Math.hypot(P.vel.x, P.vel.z);
+      animAvatar(fig, sp, dt, !P.ground && P.dead <= 0);
+      // camera
+      const tg = P.pos.clone(); tg.y += 4.5;
+      camera.position.set(tg.x + Math.sin(cam.yaw) * Math.cos(cam.pitch) * cam.dist, tg.y + Math.sin(cam.pitch) * cam.dist, tg.z + Math.cos(cam.yaw) * Math.cos(cam.pitch) * cam.dist);
+      camera.lookAt(tg);
+      const sun = scene.userData.sun; sun.position.set(P.pos.x + 60, P.pos.y + 120, P.pos.z + 40); sun.target.position.copy(P.pos);
+      // others
+      for (const o of Object.values(others)) {
+        o.fig.position.lerp(o.tgt, Math.min(1, dt * 10));
+        let d = o.ry - o.fig.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); o.fig.rotation.y += d * Math.min(1, dt * 10);
+        animAvatar(o.fig, o.sp, dt, o.air);
+      }
+      // send
+      if (online) {
+        sendT -= dt;
+        const st = [r2(P.pos.x), r2(P.pos.y), r2(P.pos.z), r2(P.ry), P.dead > 0 ? 1 : 0].join();
+        if (sendT <= 0 && (st !== lastSent || sendT < -3)) {
+          sendT = 0.15; lastSent = st;
+          setDoc(D('bx_pres', presId), { g: g.id, gn: g.name, uid: me.uid, name: prof.name, av: prof.avatar, x: r2(P.pos.x), y: r2(P.pos.y), z: r2(P.pos.z), ry: r2(P.ry), sp: r2(sp), air: !P.ground, dead: P.dead > 0, t: Date.now() }).catch(() => {});
+        }
+      }
+    } });
+  if (online) {
+    const hb = setInterval(() => { if (play && play.presId === presId) sendT = -4; }, 4000);
+    unsubs.push(() => clearInterval(hb));
+  }
+}
+function leavePlay() {
+  if (!play) return;
+  const p = play; play = null;
+  p.unsubs.forEach(f => f());
+  if (p.presId) deleteDoc(D('bx_pres', p.presId)).catch(() => {});
+  mount(null);
+  $('banner').textContent = '';
+}
+$('pLeave').onclick = () => {
+  const wasTest = play?.test; leavePlay();
+  if (wasTest && studio) { show('studio'); mountStudio(); } else goHome();
+};
+$('pReset').onclick = () => play && play.die();
+$('pChatT').onclick = () => $('chatBox').classList.toggle('hidden');
+$('chatIn').onkeydown = async e => {
+  if (e.key !== 'Enter') return;
+  const t = e.target.value.trim(); e.target.value = ''; e.target.blur();
+  if (!t || !play) return;
+  if (play.test) { toast('V testu se chat neposílá'); return; }
+  try { await addDoc(C('bx_chat'), { g: play.g.id, uid: me.uid, name: prof.name, text: t.slice(0, 200), t: Date.now() }); } catch (er) { fail(er); }
+};
+addEventListener('beforeunload', () => { if (play?.presId) deleteDoc(D('bx_pres', play.presId)).catch(() => {}); });
+
+/* ================= STUDIO ================= */
+let studio = null;
+async function openStudio(id) {
+  let g;
+  try { const s = await getDoc(D('bx_games', id)); if (!s.exists()) { toast('Hra neexistuje'); return; } g = { id, ...s.data() }; } catch (e) { fail(e); return; }
+  if (g.owner !== me.uid && !isOwner()) { toast('Tohle není tvoje hra 🔒'); return; }
+  studio = { g, parts: JSON.parse(JSON.stringify(g.parts || [])), sel: null, mode: 'translate', undo: [], dirty: false };
+  $('gName').value = g.name || ''; $('gDesc').value = g.desc || ''; $('gSky').value = g.sky || '#8fd3ff'; $('gPub').checked = !!g.published;
+  show('studio'); mountStudio();
+}
+function mountStudio() {
+  const S = studio;
+  const scene = makeScene($('gSky').value);
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 3000);
+  camera.position.set(S.cam ? S.cam[0] : 30, S.cam ? S.cam[1] : 28, S.cam ? S.cam[2] : 36);
+  const world = new THREE.Group(); scene.add(world);
+  const el = R.domElement;
+  const orbit = new OrbitControls(camera, el);
+  orbit.target.set(...(S.tgt || [0, 0, 0])); orbit.enableDamping = true; orbit.update();
+  const tc = new TransformControls(camera, el);
+  tc.setTranslationSnap(0.5); tc.setScaleSnap(0.5); tc.setMode(S.mode);
+  tc.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; if (e.value) pushUndo(); });
+  tc.addEventListener('objectChange', () => {
+    const m = tc.object; if (!m) return;
+    m.scale.set(Math.max(0.2, m.scale.x), Math.max(0.2, m.scale.y), Math.max(0.2, m.scale.z));
+    const p = m.userData.part; p.p = m.position.toArray().map(r2); p.s = m.scale.toArray().map(r2);
+    if (p.t === 'ball') { const v = S.mode === 'scale' ? Math.max(...p.s) : p.s[0]; p.s = [v, v, v]; m.scale.set(v, v, v); }
+    if (m.material.map && p.t === 'box') m.material.map.repeat.set(p.s[0] / 4, p.s[2] / 4);
+    S.dirty = true; renderProps(true);
+  });
+  scene.add(tc);
+  S.scene = scene; S.world = world; S.tc = tc; S.orbit = orbit; S.camera = camera;
+  rebuildWorld();
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let down = null;
+  const pd = e => { down = { x: e.clientX, y: e.clientY, gizmo: tc.axis !== null }; };
+  const pu = e => {
+    if (!down) return; const d = down; down = null;
+    if (d.gizmo || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
+    const r = el.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObjects(world.children, false)[0];
+    select(hit ? hit.object : null);
+  };
+  el.addEventListener('pointerdown', pd); el.addEventListener('pointerup', pu);
+  mount({ kind: 'studio', scene, camera, host: $('studioStage'),
+    update() { orbit.update(); },
+    dispose() { S.cam = camera.position.toArray(); S.tgt = orbit.target.toArray(); el.removeEventListener('pointerdown', pd); el.removeEventListener('pointerup', pu); tc.detach(); tc.dispose(); orbit.dispose(); } });
+}
+function rebuildWorld() {
+  const S = studio; S.tc.detach(); S.world.clear();
+  for (const p of S.parts) S.world.add(partMesh(p));
+  const selP = S.sel; S.sel = null;
+  if (selP) { const m = S.world.children.find(c => c.userData.part === selP); if (m) select(m); else renderProps(); } else renderProps();
+  $('gCount').textContent = S.parts.length + ' dílů';
+}
+function select(m) {
+  const S = studio;
+  if (m && m.userData.part === S.parts[0] && S.parts[0].s[0] >= 200 && S.sel !== S.parts[0]) { /* baseplate: allow but warn by default unselected */ }
+  S.sel = m ? m.userData.part : null;
+  if (m) S.tc.attach(m); else S.tc.detach();
+  renderProps();
+}
+function selMesh() { return studio.world.children.find(c => c.userData.part === studio.sel); }
+function pushUndo() { const S = studio; S.undo.push(JSON.stringify(S.parts)); if (S.undo.length > 40) S.undo.shift(); S.dirty = true; }
+function renderProps(onlyNums) {
+  const S = studio, p = S.sel, box = $('sProps');
+  if (!p) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  if (onlyNums && box.dataset.for === String(S.parts.indexOf(p))) {
+    ['x', 'y', 'z'].forEach((a, i) => { $('pp' + a).value = p.p[i]; $('ps' + a).value = p.s[i]; });
+    return;
+  }
+  box.dataset.for = String(S.parts.indexOf(p));
+  box.innerHTML = `<b>🧱 Díl</b>
+    <label>Typ</label><select id="pk">${Object.entries(KINDS).map(([k, v]) => `<option value="${k}" ${p.k === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+    <label>Barva</label><div class="opts">${PAL.slice(0, 14).map(c => `<button class="sw" style="background:${c};width:26px;height:26px" data-pc="${c}"></button>`).join('')}<input type="color" id="pcol" value="${p.c}" style="width:40px;height:28px;padding:2px"></div>
+    <label>Pozice X / Y / Z</label><div class="xyz">${['x', 'y', 'z'].map((a, i) => `<input type="number" step="0.5" id="pp${a}" value="${p.p[i]}">`).join('')}</div>
+    <label>Velikost X / Y / Z</label><div class="xyz">${['x', 'y', 'z'].map((a, i) => `<input type="number" step="0.5" min="0.2" id="ps${a}" value="${p.s[i]}">`).join('')}</div>
+    <label>Průhlednost</label><input type="range" min="0" max="0.9" step="0.1" id="ptr" value="${p.tr || 0}">`;
+  const apply = () => { const m = selMesh(); if (!m) return; const nm = partMesh(p); studio.world.remove(m); studio.world.add(nm); studio.tc.attach(nm); studio.dirty = true; };
+  $('pk').onchange = e => { pushUndo(); p.k = e.target.value; if (KCOL[p.k]) { p.c = KCOL[p.k]; $('pcol').value = p.c; } apply(); };
+  box.querySelectorAll('[data-pc]').forEach(b => b.onclick = () => { pushUndo(); p.c = b.dataset.pc; $('pcol').value = p.c; apply(); });
+  $('pcol').onchange = e => { pushUndo(); p.c = e.target.value; apply(); };
+  ['x', 'y', 'z'].forEach((a, i) => {
+    $('pp' + a).onchange = e => { pushUndo(); p.p[i] = +e.target.value || 0; apply(); };
+    $('ps' + a).onchange = e => { pushUndo(); p.s[i] = Math.max(0.2, +e.target.value || 1); if (p.t === 'ball') p.s = [p.s[i], p.s[i], p.s[i]]; apply(); renderProps(true); };
+  });
+  $('ptr').onchange = e => { pushUndo(); p.tr = +e.target.value; apply(); };
+}
+document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
+  const S = studio; if (!S) return; pushUndo();
+  const t = b.dataset.add, tg = S.orbit.target;
+  const s = t === 'box' ? [4, 1, 4] : [4, 4, 4];
+  const p = { t, p: [Math.round(tg.x), s[1] / 2 + Math.max(0, Math.round(tg.y)), Math.round(tg.z)], s, c: '#a3a2a5', k: 'normal' };
+  S.parts.push(p); S.sel = p; rebuildWorld();
+});
+$('sDup').onclick = () => { const S = studio; if (!S?.sel) return; pushUndo(); const p = JSON.parse(JSON.stringify(S.sel)); p.p[0] += p.s[0] + 1; S.parts.push(p); S.sel = p; rebuildWorld(); };
+function delSel() { const S = studio; if (!S?.sel) return; pushUndo(); S.parts.splice(S.parts.indexOf(S.sel), 1); S.sel = null; rebuildWorld(); }
+$('sDel').onclick = delSel;
+function undo() { const S = studio; if (!S?.undo.length) return; S.parts = JSON.parse(S.undo.pop()); S.sel = null; rebuildWorld(); }
+$('sUndo').onclick = undo;
+function setMode(m) { studio.mode = m; studio.tc.setMode(m); $('mMove').classList.toggle('on', m === 'translate'); $('mScale').classList.toggle('on', m === 'scale'); }
+$('mMove').onclick = () => setMode('translate');
+$('mScale').onclick = () => setMode('scale');
+$('sGameT').onclick = () => $('sGame').classList.toggle('open');
+$('gSky').oninput = e => { if (studio?.scene) { studio.scene.background.set(e.target.value); studio.scene.fog.color.set(e.target.value); studio.dirty = true; } };
+['gName', 'gDesc', 'gPub'].forEach(id => $(id).onchange = () => studio && (studio.dirty = true));
+addEventListener('keydown', e => {
+  if (!studio || $('studio').classList.contains('hidden') || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') delSel();
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); $('sDup').onclick(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveStudio(); }
+  else if (e.key === 'w' || e.key === 'g') setMode('translate');
+  else if (e.key === 'r' || e.key === 's') setMode('scale');
+  else if (e.key === 'Escape') select(null);
+});
+async function saveStudio(quiet) {
+  const S = studio; if (!S) return false;
+  const data = { name: $('gName').value.trim() || 'Bez názvu', desc: $('gDesc').value.trim(), sky: $('gSky').value, published: $('gPub').checked, parts: S.parts, updated: Date.now() };
+  if (JSON.stringify(data).length > 900000) { toast('Hra je moc velká, ubej díly ⚠️'); return false; }
+  try { await updateDoc(D('bx_games', S.g.id), data); Object.assign(S.g, data); S.dirty = false; if (!quiet) toast('Uloženo 💾'); return true; } catch (e) { fail(e); return false; }
+}
+$('sSave').onclick = () => saveStudio();
+$('sTest').onclick = () => {
+  const S = studio; if (!S) return;
+  mount(null);
+  startPlay(null, { id: S.g.id, name: $('gName').value, sky: $('gSky').value, parts: JSON.parse(JSON.stringify(S.parts)) });
+};
+async function closeStudio(save = true) {
+  if (!studio) return;
+  if (save && studio.dirty) await saveStudio(true);
+  studio = null; mount(null);
+}
+$('sExit').onclick = async () => { await closeStudio(true); toast('Uloženo 💾'); homeTab = 'Create'; goHome(); };
+</script>
+</body>
+</html>
